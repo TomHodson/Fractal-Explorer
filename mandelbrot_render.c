@@ -1,8 +1,7 @@
-//mandelbrot.c - generates a ppm file of the mandelbrot set with shading
-//Still to add: include a jpeg library, add user defined dimensions, add user defined file name
-#include "stdio.h"
-#include "complex.h"
-#include "math.h"
+#include <stdio.h>
+#include <complex.h>
+#include <math.h>
+//#include <omp.h>
 
 double mandelbrot_test(double complex c);
 
@@ -31,6 +30,7 @@ struct colour mix(struct colour a, struct colour b, double x) {
 
 void mandelbrot(int width, int height, struct vec2 center, struct vec2 viewport, struct colour image[])
 {
+    
     for(int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++)
         {
@@ -39,10 +39,10 @@ void mandelbrot(int width, int height, struct vec2 center, struct vec2 viewport,
             double output = mandelbrot_test(z);
             struct colour col;
             col.r = col.g = col.b = (char) (output * 100.0);
-            struct colour orange = {0.8*255.0, 0.2*255.0,0.1*255.0};
+            struct colour orange = {200, 50, 25};
             struct colour black = {0,0,0};
 
-            image[width*j + i] = mix(orange, black, atan(output));
+            image[width*j + i] = mix(orange, black, output);
         }
     }
 }
