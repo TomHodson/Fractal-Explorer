@@ -24,11 +24,12 @@ double clamp(double min, double max, double in) {
 }
 
 struct colour mix(struct colour a, struct colour b, double x) {
+    x = fmod(x, 1.0);
     struct colour out = {a.r * x + b.r * (1.0 - x), a.g * x + b.g * (1.0 - x), a.b * x + b.b * (1.0 - x)};
     return out;
 }
 
-void mandelbrot(int width, int height, struct vec2 center, struct vec2 viewport, struct colour image[])
+void mandelbrot(int width, int height,double scale, struct vec2 center, struct vec2 viewport, struct colour image[])
 {
     
     for(int j = 0; j < height; j++) {
@@ -37,12 +38,10 @@ void mandelbrot(int width, int height, struct vec2 center, struct vec2 viewport,
             double complex z = ((((double) i / (double) width) - 0.5) * viewport.x - center.x);
             z += I*((((double) j / (double) height) - 0.5) * viewport.y - center.y);
             double output = mandelbrot_test(z);
-            struct colour col;
-            col.r = col.g = col.b = (char) (output * 100.0);
-            struct colour orange = {200, 50, 25};
+            struct colour orange = {200, 100, 50};
             struct colour black = {0,0,0};
 
-            image[width*j + i] = mix(orange, black, output);
+            image[width*j + i] = mix(black, orange, log(output /scale));
         }
     }
 }
@@ -66,8 +65,10 @@ double mandelbrot_test(double complex c)
                 
                 r_squared = cimag(x) * cimag(x) + creal(x) * creal(x);
                 if ( r_squared >= 4.0)
-                {
-                        return (double) i*1.0 - log(log(sqrt(r_squared))/ log(limit)) / log(2.0);
+                {       
+                        double x = i;
+                        double lim = limit;
+                        return x - log(log(sqrt(r_squared))/ log(lim)) / log(2.0);
                 }
         }
  

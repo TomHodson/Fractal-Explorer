@@ -7,6 +7,7 @@ import pyglet.window
 from pyglet.window import key
 from pyglet import gl
 import numpy as np
+import time
 
 from shader import Shader
 
@@ -123,11 +124,12 @@ class colour(c.Structure):
 
 
 class MainWindow(pyglet.window.Window):
-    def __init__(self):
+    def __init__(self, **kwargs):
         config = pyglet.gl.Config(sample_buffers=1, samples=4)
 
-        pyglet.window.Window.__init__(self, width=640, height=320,
-                resizable=True, config=self.config)
+        pyglet.window.Window.__init__(self, width=1000, height=700,
+            resizable=True, config=self.config, **kwargs)
+
         self.fps = pyglet.clock.ClockDisplay()
         self.shader = Shader(vertex_shader, fragment_shader)
         self.center = np.array([0.0,0.0])
@@ -135,6 +137,7 @@ class MainWindow(pyglet.window.Window):
 
         self.screen_size = np.array([self.width, self.height])
         self.view_size = np.array([3.0, 2.0])
+        self.col_scale = 4000.0
 
         self.draw()
 
@@ -148,12 +151,20 @@ class MainWindow(pyglet.window.Window):
             self.show_fps = not self.show_fps
         elif symbol == key.F2:
             pyglet.image.get_buffer_manager().get_color_buffer().save('screenshot.png')
-        elif symbol == key.R:
-            self.render()
-            return
         elif symbol == key.C:
             self.renderC()
             return
+        elif symbol == key.DOWN:
+            self.col_scale *= 0.9
+            print self.col_scale
+            self.renderC() 
+            return
+        elif symbol == key.UP:
+            self.col_scale *= 1.1
+            print self.col_scale
+            self.renderC() 
+            return
+
         self.draw()
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
@@ -203,16 +214,24 @@ class MainWindow(pyglet.window.Window):
             self.dispatch_events()
 
     def renderC(self):
-        imagetype = c.c_byte * (self.width * self.height * 3)
+        w, h, = self.width,self.height
+        t = time.time()
+        imagetype = c.c_byte * (w * h * 3)
         imagedata = imagetype()
-        clib.mandelbrot(c.c_int(self.width), c.c_int(self.height), vec2(self.center), vec2(self.view_size), imagedata)
-        image = pyglet.image.ImageData(self.width, self.height, "RGB", imagedata, pitch = 3 * c.sizeof(c.c_byte) * self.width)
+        clib.mandelbrot(c.c_int(w), c.c_int(h),c.c_double(self.col_scale), vec2(self.center), vec2(self.view_size), imagedata)
+        image = pyglet.image.ImageData(w, h, "RGB", imagedata, pitch = 3 * c.sizeof(c.c_char) * w)
         image.blit(0,0)
         self.flip()
+        return image
 
 def main():
     from subprocess import call
-    call(["make"])
+    call("make".split())
+    #MainWindow(visible = False).renderC()
+
+    #call("gcc-4.9 --std=gnu99 -lm -shared -o mandelbrot_render.so mandelbrot_render.c".split())
+    #MainWindow(visible = False).renderC()
+
     MainWindow().run()
 
 if __name__ == "__main__":
